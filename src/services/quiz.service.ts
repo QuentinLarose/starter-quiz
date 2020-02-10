@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { Quiz } from '../models/quiz.model';
 import { QUIZ_LIST } from '../mocks/quiz-list.mock';
+import { HttpClient } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root'
@@ -23,12 +24,34 @@ export class QuizService {
    * Naming convention: Add '$' at the end of the variable name to highlight it as an Observable.
    */
   public quizzes$: BehaviorSubject<Quiz[]> = new BehaviorSubject(this.quizzes);
+  // tslint:disable-next-line:ban-types
+  public url: String = 'https://api.myjson.com/bins/silu2';
 
-  constructor() {
+  constructor(private http: HttpClient) {
+    this.setQuizzesFromUrl();
   }
 
   addQuiz(quiz: Quiz) {
     // You need here to update the list of quiz and then update our observable (Subject) with the new list
     // More info: https://angular.io/tutorial/toh-pt6#the-searchterms-rxjs-subject
+    this.quizzes.push(quiz);
+    this.quizzes$.next(this.quizzes);
+    console.log(quiz);
+
+  }
+
+  deleteQuiz(quiz: Quiz) {
+    const index = this.quizzes.indexOf(quiz);
+    if (index > -1) {
+      this.quizzes.splice(index, 1);
+    }
+  }
+
+  setQuizzesFromUrl() {
+    // @ts-ignore
+    return this.http.get<{quizzes: Quiz[]}>(this.url).subscribe((quizzes) => {
+      this.quizzes = quizzes.quizzes;
+      this.quizzes$.next(this.quizzes);
+    });
   }
 }
